@@ -11,7 +11,7 @@ test('Vercel startup rejects missing cloud secrets instead of using local demo d
  delete env.DATABASE_URL;
  delete env.ADMIN_PASSWORD;
  delete env.CREDENTIALS_ENCRYPTION_KEY;
- const result=spawnSync(process.execPath,['-e',"require('./server')"],{cwd:root,env,encoding:'utf8'});
+ const result=spawnSync(process.execPath,['-e',"require('./app_server')"],{cwd:root,env,encoding:'utf8'});
  assert.notEqual(result.status,0);
  assert.match(result.stderr,/pooler de Supabase/);
 });
@@ -20,6 +20,8 @@ test('Vercel routes requests to the Node API function',()=>{
  const config=require('../vercel.json');
  assert.deepEqual(config.routes,[{src:'/(.*)',dest:'/api/index.js'}]);
  assert.equal(config.functions['api/index.js'].includeFiles,'public/**');
+ assert.equal(fs.existsSync(path.join(root,'server.js')),false);
+ assert.equal(fs.existsSync(path.join(root,'app_server.js')),true);
 });
 
 test('storage supports transactional SQLite operations for existing local installs',async()=>{
@@ -77,7 +79,7 @@ test('local HTTP workflows retain demo, session, answer, teacher, and credential
  process.env.HOST='127.0.0.1';
  process.env.DEMO_MODE='1';
  process.env.ADMIN_PASSWORD='test-local-admin-password';
- const {server,db,initialization}=require('../server');
+ const {server,db,initialization}=require('../app_server');
  await initialization;
  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
  const base=`http://127.0.0.1:${server.address().port}`;
