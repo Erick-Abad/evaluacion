@@ -1,0 +1,1 @@
+Esta carpeta guarda la base SQLite interna y sus copias. No la publiques ni la borres después de recibir respuestas reales. Los archivos de alumnos se crean automáticamente al primer inicio.
