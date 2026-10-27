@@ -18,8 +18,10 @@ test('Vercel startup rejects missing cloud secrets instead of using local demo d
 
 test('Vercel routes requests to the Node API function',()=>{
  const config=require('../vercel.json');
+ const pkg=require('../package.json');
  assert.deepEqual(config.routes,[{src:'/(.*)',dest:'/api/index.js'}]);
  assert.equal(config.functions['api/index.js'].includeFiles,'public/**');
+ assert.equal(pkg.main,'api/index.js');
  assert.equal(fs.existsSync(path.join(root,'server.js')),false);
  assert.equal(fs.existsSync(path.join(root,'app_server.js')),true);
 });
