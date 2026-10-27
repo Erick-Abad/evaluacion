@@ -1,10 +1,10 @@
 # Evaluación de intereses vocacionales - Miguel Febres Cordero
 
-Plataforma web local para 60 estudiantes de Décimo A y B. Cuestionario de 50 afirmaciones, cinco especialidades (10 preguntas por área), respuestas sin retroceso, reinicios auditados, base SQLite interna, exportación CSV y descarga directa de informes PDF individuales.
+Plataforma web para 60 estudiantes de Décimo A y B. Cuestionario de 50 afirmaciones, cinco especialidades (10 preguntas por área), respuestas sin retroceso, reinicios auditados, almacenamiento local SQLite o PostgreSQL en Supabase, exportación CSV y descarga directa de informes PDF individuales.
 
 ## 1. Ejecutar en un equipo del colegio
 
-Requisitos: **Node.js 22 o superior**. No utiliza servicios en la nube ni paquetes npm de terceros.
+Requisitos: **Node.js 22 o superior**. El modo local no requiere servicios en la nube; la instalación de producción utiliza el paquete npm `pg` para la opción PostgreSQL/Supabase.
 
 1. Extrae el ZIP **completo** en una carpeta de tu computadora. No abras `public/index.html` directamente: la plataforma necesita el servidor.
 2. En una terminal dentro de la carpeta `plataforma_vocacional_mfc`, ejecuta `npm start`.
@@ -81,3 +81,20 @@ La carpeta `data/` contiene datos personales de menores; mantén el equipo actua
 ## 8. Vista previa independiente
 
 El archivo `vista_previa_vocacional_actualizada.html` que se entrega por separado **es un simulador visual**. Sus respuestas de demostración se guardan únicamente en el navegador y no alimentan SQLite. Para almacenamiento centralizado real, el control docente efectivo, los respaldos y los PDF directos debe utilizarse el proyecto Node.js del ZIP.
+
+## 9. Despliegue gratuito con Vercel y Supabase
+
+El modo local anterior no cambia: `npm start` continúa usando SQLite y las copias locales. En Vercel, la aplicación usa PostgreSQL administrado por Supabase; no guarda datos de la aplicación en el sistema de archivos de la función. El despliegue no importa automáticamente datos de un archivo SQLite existente: inicia una nómina nueva en la base de datos configurada.
+
+1. Crea un proyecto Supabase y una aplicación Vercel desde este repositorio. En Supabase, copia la URI de **Transaction pooler** (host terminado en `.pooler.supabase.com`, puerto `6543`) desde *Connect*. No uses la contraseña de Postgres en el código ni la URI de conexión directa; configura la URI completa como secreto.
+2. En Vercel → **Settings → Environment Variables**, agrega para Production (y Preview solo si corresponde):
+   - `DATABASE_URL`: URI del Transaction pooler de Supabase.
+   - `ADMIN_PASSWORD`: contraseña docente nueva, aleatoria y de al menos 16 caracteres. No uses la clave de demostración de esta documentación.
+   - `CREDENTIALS_ENCRYPTION_KEY`: clave independiente de exactamente 32 bytes codificada en Base64. Genérala localmente con `node -e "console.log(require('node:crypto').randomBytes(32).toString('base64'))"`.
+3. Vuelve a desplegar. La función crea las tablas y, si están vacías, la nómina de 60 estudiantes, claves individuales aleatorias y una copia cifrada AES-256-GCM de las claves iniciales. **La clave cifradora nunca se guarda en PostgreSQL**; conserva una copia protegida fuera de Vercel. Si se pierde o se cambia, no será posible recuperar la copia cifrada ya creada. Nunca la publiques ni la incluyas en Git.
+4. Inicia sesión como docente y descarga inmediatamente **Claves iniciales privadas**. Entrega los PIN de forma privada. El CSV se descifra únicamente para esta respuesta autenticada y se envía con `Cache-Control: no-store`; la base conserva solo el ciphertext. Los PIN regenerados se muestran una vez en la respuesta del panel.
+5. Antes de registrar alumnos reales, verifica el inicio docente, el acceso de prueba (no debe estar disponible), guardado de respuestas, reinicios, exportación CSV y PDF. La URI y las contraseñas solo deben configurarse como variables protegidas del proveedor.
+
+El modo Vercel se selecciona automáticamente y rechaza el arranque si faltan las variables requeridas o si la conexión no es el Transaction pooler de Supabase. No usa la contraseña docente predeterminada ni crea el alumno `D00`. Las sesiones se guardan en PostgreSQL y la cookie se marca `Secure`, `HttpOnly` y `SameSite=Strict`.
+
+El botón **Respaldar SQLite** sigue disponible: en Vercel genera un snapshot consistente en memoria, descargable como SQLite y sin escribir archivos de la función. Incluye los datos personales, hashes de PIN/sesión, auditoría y el ciphertext cifrado de las claves iniciales, pero no la clave de cifrado. Descarga periódicamente la copia y comprueba su restauración con acceso restringido. Configura y comprueba también la política de respaldo de Supabase disponible en tu plan antes de almacenar resultados reales; los planes gratuitos pueden tener límites de retención. Protege los CSV y PDFs descargados, pues contienen información personal de estudiantes menores. La aplicación no debe considerarse un sustituto de la evaluación institucional de privacidad, consentimiento y normativa aplicable.

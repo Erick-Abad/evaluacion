@@ -165,7 +165,7 @@ async function action(ev){const t=ev.target.closest('[data-action]');if(!t)retur
  else if(a==='download-student-pdf'){window.location='/api/report.pdf'}
  else if(a==='filter-class'){state.classFilter=t.dataset.value;render()}
  else if(a==='download-csv'){window.location='/api/admin/export.csv'}
- else if(a==='download-backup'){window.location='/api/admin/backup.sqlite';toast('Se generó una copia de la base local. Guárdala en un lugar seguro.')}
+ else if(a==='download-backup'){window.location='/api/admin/backup.sqlite';toast('Se generó una copia de la base de datos. Guárdala en un lugar seguro.')}
  else if(a==='download-credentials'){window.location='/api/admin/credentials.csv';toast('Este archivo contiene claves privadas. Guárdalo de manera segura.')}
  else if(a==='open-detail'){const r=await request('/api/admin/student?code='+encodeURIComponent(t.dataset.code));state.adminDetail=r;state.modal={type:'detail'};render()}
  else if(a==='show-admin-reset'){state.modal={type:'admin-reset',code:t.dataset.code,name:state.adminDetail.student.name};render()}
