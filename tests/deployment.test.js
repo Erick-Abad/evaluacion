@@ -11,9 +11,21 @@ test('Vercel startup rejects missing cloud secrets instead of using local demo d
  delete env.DATABASE_URL;
  delete env.ADMIN_PASSWORD;
  delete env.CREDENTIALS_ENCRYPTION_KEY;
+ delete env.DATABASE_CA_CERT_B64;
  const result=spawnSync(process.execPath,['-e',"require('./app_server')"],{cwd:root,env,encoding:'utf8'});
  assert.notEqual(result.status,0);
  assert.match(result.stderr,/pooler de Supabase/);
+});
+
+test('Vercel startup requires a valid Supabase CA certificate',()=>{
+ const env={...process.env,VERCEL:'1',
+  DATABASE_URL:'postgresql://postgres.project:secret@aws-0-us-east-1.pooler.supabase.com:6543/postgres',
+  ADMIN_PASSWORD:'a-long-test-password',
+  CREDENTIALS_ENCRYPTION_KEY:require('node:crypto').randomBytes(32).toString('base64')};
+ delete env.DATABASE_CA_CERT_B64;
+ const result=spawnSync(process.execPath,['-e',"require('./app_server')"],{cwd:root,env,encoding:'utf8'});
+ assert.notEqual(result.status,0);
+ assert.match(result.stderr,/DATABASE_CA_CERT_B64/);
 });
 
 test('Vercel routes requests to the Node API function',()=>{

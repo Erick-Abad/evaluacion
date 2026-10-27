@@ -16,6 +16,7 @@ const CLOUD=process.env.VERCEL==='1'||process.env.PERSISTENCE==='postgres';
 const DEMO_MODE=!CLOUD&&process.env.DEMO_MODE!=='0'&&(HOST==='127.0.0.1'||HOST==='localhost');
 const ADMIN_PASSWORD=process.env.ADMIN_PASSWORD||(CLOUD?'':'0504784075');
 const credentialKey=CLOUD?Buffer.from(process.env.CREDENTIALS_ENCRYPTION_KEY||'','base64'):null;
+const databaseCaCert=CLOUD?Buffer.from(process.env.DATABASE_CA_CERT_B64||'','base64').toString('utf8'):'';
 let databaseHost='';
 try{databaseHost=new URL(process.env.DATABASE_URL||'').hostname}catch{}
 if(CLOUD&&( !databaseHost.endsWith('.pooler.supabase.com')||
@@ -23,10 +24,14 @@ if(CLOUD&&( !databaseHost.endsWith('.pooler.supabase.com')||
  ADMIN_PASSWORD.length<16||ADMIN_PASSWORD==='0504784075'||credentialKey.length!==32)){
  throw new Error('Configura DATABASE_URL (pooler de Supabase), ADMIN_PASSWORD de al menos 16 caracteres y CREDENTIALS_ENCRYPTION_KEY de 32 bytes en base64.');
 }
+if(CLOUD){
+ try{new crypto.X509Certificate(databaseCaCert)}
+ catch{throw new Error('Configura DATABASE_CA_CERT_B64 con el certificado CA de Supabase codificado en Base64.')}
+}
 if(!CLOUD&&ADMIN_PASSWORD.length<10)throw new Error('ADMIN_PASSWORD debe tener al menos 10 caracteres.');
 const dbFile=CLOUD?null:(process.env.DB_PATH||path.join(ROOT,'data','vocacional.db'));
 if(dbFile)fs.mkdirSync(path.dirname(dbFile),{recursive:true});
-const db=createStorage({mode:CLOUD?'postgres':'sqlite',databaseUrl:process.env.DATABASE_URL,sqlitePath:dbFile});
+const db=createStorage({mode:CLOUD?'postgres':'sqlite',databaseUrl:process.env.DATABASE_URL,databaseCaCert,sqlitePath:dbFile});
 const initialization=initialize();
 initialization.catch(error=>console.error('No se pudo inicializar la persistencia:',error));
 

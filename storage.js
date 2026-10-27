@@ -53,7 +53,7 @@ CREATE TABLE IF NOT EXISTS initial_credentials(
  id INTEGER PRIMARY KEY CHECK(id=1), iv TEXT NOT NULL, auth_tag TEXT NOT NULL, ciphertext TEXT NOT NULL);`
 };
 
-function createStorage({mode,databaseUrl,sqlitePath}){
+function createStorage({mode,databaseUrl,databaseCaCert,sqlitePath}){
  if(mode==='postgres'){
   const {Pool}=require('pg');
   const pool=new Pool({
@@ -61,7 +61,7 @@ function createStorage({mode,databaseUrl,sqlitePath}){
    max:2,
    idleTimeoutMillis:10000,
    connectionTimeoutMillis:10000,
-   ssl:{rejectUnauthorized:true}
+   ssl:{ca:databaseCaCert,rejectUnauthorized:true,minVersion:'TLSv1.2'}
   });
   const transactions=new AsyncLocalStorage();
   const normalize=row=>Object.fromEntries(Object.entries(row).map(([key,value])=>[
